@@ -1,0 +1,36 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+
+import argparse
+from getpass import getpass
+import os.path
+
+from utils.checker import Checker, Target
+from utils.loader import load_checks
+
+DEFAULT_HOST = 'www.studentrobotics.org'
+URL_TEMPLATE = "https://{0}/"
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--host",
+                    default=DEFAULT_HOST,
+                    help="The host to check (default: {0})".format(DEFAULT_HOST))
+parser.add_argument("--password",
+                    help="The password for the given user. If not provided " \
+                         "on the command line the user will be prompted for it")
+parser.add_argument("username",
+                    help="The username to login with (where applicable)")
+args = parser.parse_args()
+
+passwd = args.password or getpass("Password for {0}@{1}: ".format(args.username, args.host))
+
+checks_dir = os.path.join(os.path.dirname(__file__), 'checks')
+checks = load_checks(checks_dir)
+checker = Checker(checks)
+
+baseurl = URL_TEMPLATE.format(args.host)
+target = Target(args.host, baseurl, args.username, passwd)
+fail_count = checker.run_checks(target)
+
+exit(fail_count)
